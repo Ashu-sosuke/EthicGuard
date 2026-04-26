@@ -9,7 +9,8 @@ import {
   X,
   AlertTriangle,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, Legend } from 'recharts';
 
@@ -112,8 +113,22 @@ const BiasCheckPage = () => {
 
         {/* Results Area */}
         <div className="lg:col-span-3 space-y-8">
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }} 
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3"
+            >
+              <AlertTriangle size={18} />
+              {error}
+              <button onClick={() => setError(null)} className="ml-auto hover:text-white">
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+
           <AnimatePresence mode="wait">
-            {!results && !loading && (
+            {!results && !loading && !error && (
               <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="glass-card p-12 text-center border-dashed border-2"
@@ -152,15 +167,20 @@ const BiasCheckPage = () => {
                     <PieChartIcon className="text-cyan-400" />
                     Distribution Analysis
                   </h3>
-                  <div className="h-[300px] w-full">
+                  <div className="h-[500px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={Object.entries(results.distribution).map(([name, value]) => ({ name, value }))}
+                          data={Object.entries(results.distribution).map(([name, value]) => ({ 
+                            name: name.replace(/[()']/g, '').replace(/, /g, ' | '), 
+                            value 
+                          }))}
                           innerRadius={80}
                           outerRadius={100}
                           paddingAngle={5}
                           dataKey="value"
+                          cx="50%"
+                          cy="30%"
                         >
                           {Object.entries(results.distribution).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -170,7 +190,10 @@ const BiasCheckPage = () => {
                           contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
                           itemStyle={{ color: '#fff' }}
                         />
-                        <Legend />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          wrapperStyle={{ paddingTop: '40px', fontSize: '12px' }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>

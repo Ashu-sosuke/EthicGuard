@@ -32,7 +32,11 @@ const UploadPage = () => {
       const res = await axios.post('http://localhost:8000/upload', formData);
       setSummary(res.data.summary);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Upload failed. Check your CSV format.');
+      console.error("Upload error:", err);
+      const msg = err.response?.data?.detail || 
+                  err.response?.data?.message || 
+                  (err.response ? `Server Error: ${err.response.status}` : `Network Error: ${err.message}`);
+      setError(msg);
     } finally {
       setLoading(false);
     }

@@ -24,12 +24,13 @@ const MemoryPage = () => {
         // Parse markdown logs from the backend
         const lines = res.data.content.split('\n');
         const parsedLogs = lines
-          .filter(line => line.startsWith('*'))
+          .filter(line => line.startsWith('* ') && line.includes(' : '))
           .map(line => {
-            const parts = line.replace('* ', '').split(' : ');
+            const cleanLine = line.substring(2); // Remove '* '
+            const parts = cleanLine.split(' : ');
             return {
-              timestamp: parts[0],
-              action: parts[1],
+              timestamp: parts[0] || 'Unknown Time',
+              action: parts[1] || 'Unknown Action',
               id: Math.random().toString(36).substr(2, 9)
             };
           }).reverse();

@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   color-scheme: dark;
@@ -53,8 +53,7 @@ body::before {
   }
 
   .btn-primary:hover {
-    @apply brightness-110;
-    box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+    @apply shadow-glow-primary brightness-110;
   }
 
   .btn-outline {
@@ -66,8 +65,7 @@ body::before {
   }
 
   .nav-link.active {
-    @apply text-white bg-white/10 border border-white/5;
-    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+    @apply text-white bg-white/10 border border-white/5 shadow-glow-primary;
   }
 }
 

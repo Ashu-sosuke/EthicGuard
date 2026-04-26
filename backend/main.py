@@ -39,9 +39,8 @@ async def get_stats():
     if os.path.exists(memory_path):
         with open(memory_path, "r") as f:
             lines = f.readlines()
-            # Find lines starting with - (if we use that format) or just recent lines
-            # For now, let's just get the last 5 lines that aren't headers
-            activities = [line.strip().replace("- ", "") for line in lines if line.strip() and not line.startswith("#") and not line.startswith("*") and not line.startswith("---")][-5:]
+            # Find lines starting with * followed by a space and containing :
+            activities = [line.strip().split(" : ")[1] for line in lines if line.strip().startswith("* ") and " : " in line][-5:]
             activities.reverse()
 
     return {

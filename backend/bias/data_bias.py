@@ -3,7 +3,8 @@ from typing import Dict, Any
 
 def detect_distribution_bias(df: pd.DataFrame, sensitive_column: str) -> Dict[str, Any]:
     """Detects distribution imbalance in a sensitive column."""
-    counts = df[sensitive_column].value_counts(normalize=True).to_dict()
+    counts_series = df[sensitive_column].value_counts(normalize=True)
+    counts = counts_series.to_dict()
     
     # Calculate max disparity
     max_val = max(counts.values())
@@ -14,7 +15,7 @@ def detect_distribution_bias(df: pd.DataFrame, sensitive_column: str) -> Dict[st
     
     return {
         "column": sensitive_column,
-        "distribution": {str(k): float(v) for k, v in counts.to_dict().items()},
+        "distribution": {str(k): float(v) for k, v in counts.items()},
         "disparity": float(round(disparity, 4)),
         "bias_flag": bool(bias_flag),
         "severity": "High" if disparity > 0.3 else "Medium" if disparity > 0.1 else "Low"
@@ -25,16 +26,16 @@ def detect_intersectional_bias(df: pd.DataFrame, sensitive_columns: list) -> Dic
     if not sensitive_columns or len(sensitive_columns) < 2:
         return {"error": "At least two columns required for intersectional analysis."}
         
-    counts = df.groupby(sensitive_columns).size() / len(df)
-    counts_dict = {str(k): v for k, v in counts.to_dict().items()}
+    counts_series = df.groupby(sensitive_columns).size() / len(df)
+    counts = counts_series.to_dict()
     
-    max_val = max(counts.values)
-    min_val = min(counts.values)
+    max_val = max(counts.values())
+    min_val = min(counts.values())
     disparity = max_val - min_val
     
     return {
         "columns": sensitive_columns,
-        "distribution": {str(k): float(v) for k, v in counts.to_dict().items()},
+        "distribution": {str(k): float(v) for k, v in counts.items()},
         "disparity": float(round(disparity, 4)),
         "bias_flag": bool(disparity > 0.2),
         "severity": "High" if disparity > 0.4 else "Medium" if disparity > 0.2 else "Low"
