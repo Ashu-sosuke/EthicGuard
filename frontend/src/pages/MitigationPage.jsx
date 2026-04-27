@@ -44,7 +44,7 @@ const MitigationPage = () => {
       setSuccess(true);
       setTimeout(() => navigate('/bias-check'), 2000);
     } catch (err) {
-      setError('Mitigation failed.');
+      setError(err.response?.data?.detail || 'Mitigation failed.');
     } finally {
       setLoading(false);
     }
@@ -86,17 +86,31 @@ const MitigationPage = () => {
         </p>
       </div>
 
+      {error && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3"
+        >
+          <Info size={18} />
+          {error}
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {methods.map((m) => (
           <button
             key={m.id}
             onClick={() => setMethod(m.id)}
             className={`glass-card p-6 text-left transition-all relative overflow-hidden group ${
-              method === m.id ? 'border-cyan-500/50 bg-cyan-500/10' : 'hover:border-white/20'
+              method === m.id ? 'border-cyan-500/50 bg-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.1)]' : 'hover:border-white/20'
             }`}
           >
             {method === m.id && (
-              <div className="absolute -top-2 -right-2 w-12 h-12 bg-cyan-500/20 blur-xl rounded-full" />
+              <motion.div 
+                layoutId="active-bg"
+                className="absolute inset-0 bg-cyan-500/5 -z-10"
+              />
             )}
             <div className={`p-3 rounded-xl bg-slate-800 w-fit mb-6 ${m.color}`}>
               <m.icon size={24} />
@@ -124,7 +138,7 @@ const MitigationPage = () => {
             <select 
               value={sensitiveCol} 
               onChange={(e) => setSensitiveCol(e.target.value)}
-              className="w-full"
+              className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-cyan-500/50 appearance-none"
             >
               <option value="">Select Column</option>
               {columns.map(col => <option key={col} value={col}>{col}</option>)}
@@ -144,7 +158,9 @@ const MitigationPage = () => {
           <button
             onClick={handleMitigate}
             disabled={!sensitiveCol || loading}
-            className="w-full btn-primary py-4 flex items-center justify-center gap-3 text-lg"
+            className={`w-full btn-primary py-4 flex items-center justify-center gap-3 text-lg ${
+              (!sensitiveCol || loading) ? 'opacity-50 cursor-not-allowed grayscale' : ''
+            }`}
           >
             {loading ? (
               <Zap className="animate-spin" />

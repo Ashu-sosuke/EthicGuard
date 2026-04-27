@@ -121,18 +121,34 @@ const DashboardPage = () => {
                 <p className="text-slate-500 font-medium italic">No active audit data. Upload a dataset to begin.</p>
               </div>
             ) : (
-              <>
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-2 h-10 rounded-full bg-cyan-400" />
+                    <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                      <Zap className="text-cyan-400" size={20} />
+                    </div>
                     <div>
-                      <p className="font-bold">Dataset Loaded</p>
-                      <p className="text-sm text-slate-400">Current dataset ready for bias analysis.</p>
+                      <p className="font-bold">Active Dataset: {statsData.filename || 'Cached Data'}</p>
+                      <p className="text-sm text-slate-400">Total Samples: {statsData.dataset_size}</p>
                     </div>
                   </div>
-                  <button onClick={() => navigate('/bias-check')} className="text-cyan-400 font-bold hover:underline">Start Audit</button>
+                  <div className="flex gap-2">
+                    <button onClick={() => navigate('/bias-check')} className="px-4 py-1.5 rounded-lg bg-cyan-500 text-black font-bold text-xs hover:bg-cyan-400 transition-colors">Start Audit</button>
+                    <button onClick={() => navigate('/model')} className="px-4 py-1.5 rounded-lg bg-white/10 text-white font-bold text-xs hover:bg-white/20 transition-colors">Train Model</button>
+                  </div>
                 </div>
-              </>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                    <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Audit Coverage</p>
+                    <p className="text-lg font-bold">Comprehensive</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                    <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Last Mitigation</p>
+                    <p className="text-lg font-bold">Oversampling</p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </motion.div>

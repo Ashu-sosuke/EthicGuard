@@ -8,7 +8,8 @@ import {
   BarChart, 
   Info,
   ChevronRight,
-  Zap
+  Zap,
+  AlertCircle
 } from 'lucide-react';
 import { BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -35,13 +36,20 @@ const ModelPage = () => {
 
   const handleTrain = async () => {
     if (!target || !sensitiveCol) return;
+    if (target === sensitiveCol) {
+      setError("Target Variable and Sensitive Feature cannot be the same column.");
+      return;
+    }
+    
     setLoading(true);
     setResults(null);
+    setError(null);
     try {
       const res = await axios.post(`http://localhost:8000/train?target=${target}&sensitive_column=${sensitiveCol}&model_type=${modelType}`);
       setResults(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Training failed.');
+      const msg = err.response?.data?.detail || err.message || 'Training failed.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -121,7 +129,18 @@ const ModelPage = () => {
         {/* Results Area */}
         <div className="lg:col-span-2 space-y-8">
           <AnimatePresence mode="wait">
-            {!results && !loading && (
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3"
+              >
+                <AlertCircle size={18} />
+                {error}
+              </motion.div>
+            )}
+
+            {!results && !loading && !error && (
               <div className="glass-card p-12 text-center border-dashed border-2">
                 <BrainCircuit className="text-slate-700 mx-auto mb-4" size={48} />
                 <p className="text-slate-500">Configure parameters and start training to see results</p>

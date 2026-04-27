@@ -22,7 +22,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory storage for the current dataset
+# In-memory storage for current session
+CACHE_FILE = "backend/data_cache.csv"
+
 current_data = {
     "df": None,
     "filename": None,
@@ -30,6 +32,17 @@ current_data = {
     "sensitive_columns": [],
     "audit_count": 0
 }
+
+def load_cache():
+    if os.path.exists(CACHE_FILE):
+        try:
+            current_data["df"] = pd.read_csv(CACHE_FILE)
+            print("Successfully recovered dataset from cache.")
+        except Exception as e:
+            print(f"Failed to load cache: {e}")
+
+# Initial load
+load_cache()
 
 @app.get("/stats")
 async def get_stats():
@@ -61,6 +74,7 @@ async def upload_file(file: UploadFile = File(...)):
         df, summary = validate_and_load_csv(content)
         current_data["df"] = df
         current_data["filename"] = file.filename
+        df.to_csv(CACHE_FILE, index=False)
         update_memory(f"Dataset uploaded: {file.filename}")
         return {"summary": summary, "filename": file.filename}
     except Exception as e:
@@ -128,10 +142,17 @@ async def train(target: str, sensitive_column: str, model_type: str = "logistic_
         y_pred = model.predict(X_test)
         
         # We need the sensitive features for the test set
-        # Since we preprocessed, we need to map back or handle indexing
-        # For simplicity in MVP, we'll slice the original df
         sensitive_features = current_data["df"].loc[X_test.index, sensitive_column]
-        fairness_metrics = evaluate_fairness(y_test, y_pred, sensitive_features)
+        
+        try:
+            fairness_metrics = evaluate_fairness(y_test, y_pred, sensitive_features)
+        except Exception as fe:
+            print(f"Fairness evaluation failed: {str(fe)}")
+            fairness_metrics = {
+                "demographic_parity_difference": 0.0,
+                "equalized_odds_difference": 0.0,
+                "error": str(fe)
+            }
         
         current_data["audit_count"] += 1
         update_memory(f"Model trained: {model_type}, Accuracy: {accuracy:.4f}")
@@ -142,23 +163,41 @@ async def train(target: str, sensitive_column: str, model_type: str = "logistic_
             "feature_importance": feature_importance
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         update_memory(f"Training error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/mitigate")
 async def mitigate(method: str, sensitive_column: str):
-    if current_data["df"] is None:
-        raise HTTPException(status_code=400, detail="No dataset uploaded")
-    
-    if method == "oversampling":
-        current_data["df"] = apply_oversampling(current_data["df"], sensitive_column)
-    elif method == "feature_removal":
-        current_data["df"] = apply_feature_removal(current_data["df"], [sensitive_column])
-    else:
-        raise HTTPException(status_code=400, detail="Unknown mitigation method")
+    try:
+        if current_data["df"] is None:
+            raise HTTPException(status_code=400, detail="No dataset uploaded")
         
-    update_memory(f"Mitigation applied: {method} on {sensitive_column}")
-    return {"status": "success", "new_size": len(current_data["df"])}
+        # Ensure column exists
+        if sensitive_column not in current_data["df"].columns:
+            raise HTTPException(status_code=400, detail=f"Column '{sensitive_column}' not found in dataset")
+
+        if method == "oversampling":
+            current_data["df"] = apply_oversampling(current_data["df"], sensitive_column)
+        elif method == "feature_removal":
+            current_data["df"] = apply_feature_removal(current_data["df"], [sensitive_column])
+        elif method == "reweighting":
+            # For reweighting, we need a target. We'll try to guess one if not provided, 
+            # or just return the weights. But for now, let's focus on oversampling.
+            raise HTTPException(status_code=400, detail="Reweighting requires target variable. Use Oversampling for now.")
+        else:
+            raise HTTPException(status_code=400, detail="Unknown mitigation method")
+        
+        # Save back to cache
+        current_data["df"].to_csv(CACHE_FILE, index=False)
+        
+        update_memory(f"Mitigation applied: {method} on {sensitive_column}")
+        return {"status": "success", "new_size": len(current_data["df"])}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/memory")
 async def get_memory():

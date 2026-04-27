@@ -60,6 +60,30 @@ const BiasCheckPage = () => {
 
   const COLORS = ['#06b6d4', '#8b5cf6', '#f472b6', '#f59e0b', '#10b981'];
 
+  const getChartData = () => {
+    if (!results || !results.distribution) return [];
+    const entries = Object.entries(results.distribution).sort((a, b) => b[1] - a[1]);
+    const topN = 8;
+    
+    if (entries.length <= topN + 1) {
+      return entries.map(([name, value]) => ({
+        name: name.replace(/[()']/g, '').replace(/, /g, ' | '),
+        value
+      }));
+    }
+
+    const topEntries = entries.slice(0, topN).map(([name, value]) => ({
+      name: name.replace(/[()']/g, '').replace(/, /g, ' | '),
+      value
+    }));
+
+    const otherValue = entries.slice(topN).reduce((sum, [_, v]) => sum + v, 0);
+    topEntries.push({ name: 'Other (Rest)', value: otherValue });
+    return topEntries;
+  };
+
+  const chartData = getChartData();
+
   return (
     <motion.div 
       initial={{ opacity: 0 }} 
@@ -87,7 +111,7 @@ const BiasCheckPage = () => {
             <ShieldCheck className="text-cyan-400" size={18} />
             Features
           </h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 overflow-y-auto max-h-[400px]">
             {columns.map(col => (
               <button
                 key={col}
@@ -167,32 +191,30 @@ const BiasCheckPage = () => {
                     <PieChartIcon className="text-cyan-400" />
                     Distribution Analysis
                   </h3>
-                  <div className="h-[500px] w-full">
+                  <div className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={Object.entries(results.distribution).map(([name, value]) => ({ 
-                            name: name.replace(/[()']/g, '').replace(/, /g, ' | '), 
-                            value 
-                          }))}
-                          innerRadius={80}
-                          outerRadius={100}
-                          paddingAngle={5}
+                          data={chartData}
+                          innerRadius={90}
+                          outerRadius={120}
+                          paddingAngle={8}
                           dataKey="value"
                           cx="50%"
-                          cy="30%"
+                          cy="50%"
                         >
-                          {Object.entries(results.distribution).map((entry, index) => (
+                          {chartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip 
-                          contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                          contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
                           itemStyle={{ color: '#fff' }}
                         />
                         <Legend 
                           verticalAlign="bottom" 
-                          wrapperStyle={{ paddingTop: '40px', fontSize: '12px' }}
+                          align="center"
+                          wrapperStyle={{ paddingTop: '20px', fontSize: '11px', opacity: 0.8 }}
                         />
                       </PieChart>
                     </ResponsiveContainer>

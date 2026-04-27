@@ -9,7 +9,8 @@ import {
   FileWarning,
   Download,
   ShieldAlert,
-  Info
+  Info,
+  CheckCircle2
 } from 'lucide-react';
 
 const AuditReport = () => {
@@ -97,9 +98,9 @@ const AuditReport = () => {
           {/* Missing Values Card */}
           <div className="glass-card p-8">
             <h3 className="text-xl font-bold mb-6">Data Integrity</h3>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {Object.entries(audit.missing_values).map(([col, count]) => (
-                <div key={col} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                <div key={col} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                   <span className="text-sm font-medium">{col}</span>
                   <div className="flex items-center gap-3">
                     <span className={`text-xs font-bold ${count > 0 ? 'text-amber-400' : 'text-slate-500'}`}>

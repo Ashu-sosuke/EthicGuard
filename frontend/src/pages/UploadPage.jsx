@@ -168,7 +168,7 @@ const UploadPage = () => {
                       <tr key={i} className="hover:bg-white/5 transition-colors group">
                         {Object.values(row).map((val, j) => (
                           <td key={j} className="px-6 py-4 text-sm border-b border-white/5 text-slate-300">
-                            {val.toString()}
+                            {val !== null && val !== undefined ? val.toString() : <span className="text-slate-600 italic">null</span>}
                           </td>
                         ))}
                       </tr>
