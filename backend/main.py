@@ -11,6 +11,14 @@ from backend.bias.data_bias import detect_distribution_bias, detect_intersection
 from backend.models.train import train_model
 from backend.bias.model_fairness import evaluate_fairness
 from backend.bias.mitigation import apply_oversampling, apply_feature_removal
+from pydantic import BaseModel
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(env_path)
+if os.getenv("GEMINI_API_KEY"):
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI(title="Unbiased AI Decision System")
 
@@ -206,6 +214,48 @@ async def get_memory():
         return {"content": "No logs found."}
     with open(memory_path, "r") as f:
         return {"content": f.read()}
+
+class GeminiReportRequest(BaseModel):
+    accuracy: float
+    demographic_parity: float
+    equalized_odds: float
+    target: str
+    sensitive_column: str
+    model_type: str
+
+@app.post("/generate-gemini-report")
+async def generate_gemini_report(request: GeminiReportRequest):
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=400, detail="Gemini API Key is missing. Please add GEMINI_API_KEY to your .env file.")
+        
+    prompt = f"""
+    You are an expert AI Ethics and Fairness Consultant. 
+    Analyze the following machine learning model fairness metrics and provide a professional, easy-to-understand summary report.
+    
+    Context:
+    - Target Variable: {request.target}
+    - Sensitive Attribute: {request.sensitive_column}
+    - Model Type: {request.model_type.replace('_', ' ').title()}
+    - Overall Accuracy: {request.accuracy * 100:.2f}%
+    - Demographic Parity Difference (Disparity Gap): {request.demographic_parity * 100:.2f}%
+    - Equalized Odds Difference (FPR/TPR Gap): {request.equalized_odds * 100:.2f}%
+    
+    Format the response using Markdown. Include:
+    1. A brief executive summary.
+    2. An interpretation of the fairness metrics (is the model fair or biased? Explain what the percentages mean in this context).
+    3. Actionable recommendations on how to mitigate any detected bias.
+    """
+    
+    try:
+        model = genai.GenerativeModel('gemini-3-flash-preview')
+        response = model.generate_content(prompt)
+        
+        update_memory(f"Generated Gemini Fairness Report for {request.sensitive_column}")
+        return {"report": response.text}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to generate Gemini report: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

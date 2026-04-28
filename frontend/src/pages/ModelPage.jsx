@@ -9,7 +9,8 @@ import {
   Info,
   ChevronRight,
   Zap,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -21,6 +22,8 @@ const ModelPage = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
+  const [geminiReport, setGeminiReport] = useState(null);
+  const [geminiLoading, setGeminiLoading] = useState(false);
 
   useEffect(() => {
     const fetchColumns = async () => {
@@ -43,6 +46,7 @@ const ModelPage = () => {
     
     setLoading(true);
     setResults(null);
+    setGeminiReport(null);
     setError(null);
     try {
       const res = await axios.post(`http://localhost:8000/train?target=${target}&sensitive_column=${sensitiveCol}&model_type=${modelType}`);
@@ -52,6 +56,25 @@ const ModelPage = () => {
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    setGeminiLoading(true);
+    try {
+      const res = await axios.post('http://localhost:8000/generate-gemini-report', {
+        accuracy: results.accuracy,
+        demographic_parity: results.fairness_metrics.demographic_parity_difference,
+        equalized_odds: results.fairness_metrics.equalized_odds_difference,
+        target: target,
+        sensitive_column: sensitiveCol,
+        model_type: modelType
+      });
+      setGeminiReport(res.data.report);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to generate report.');
+    } finally {
+      setGeminiLoading(false);
     }
   };
 
@@ -196,6 +219,36 @@ const ModelPage = () => {
                   <p className="mt-4 text-xs text-slate-500 italic">
                     * Features highlighted in <span className="text-pink-400">pink</span> represent sensitive attributes. High weightage here indicates potential proxies for bias.
                   </p>
+                </div>
+
+                {/* Gemini AI Report */}
+                <div className="glass-card p-8 bg-gradient-to-br from-slate-900 to-slate-800 border-indigo-500/30">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-indigo-300">
+                      <Sparkles className="text-indigo-400" />
+                      Gemini AI Fairness Analysis
+                    </h3>
+                    {!geminiReport && (
+                      <button
+                        onClick={handleGenerateReport}
+                        disabled={geminiLoading}
+                        className="px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 rounded-lg text-sm font-bold transition-all border border-indigo-500/30 flex items-center gap-2"
+                      >
+                        {geminiLoading ? 'Analyzing...' : 'Generate Report'}
+                      </button>
+                    )}
+                  </div>
+                  
+                  {geminiReport && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="prose prose-invert max-w-none text-slate-300">
+                      <div className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                        {geminiReport}
+                      </div>
+                    </motion.div>
+                  )}
+                  {!geminiReport && !geminiLoading && (
+                    <p className="text-slate-500 text-sm">Click generate to get an expert, plain-language summary of these fairness metrics.</p>
+                  )}
                 </div>
               </motion.div>
             )}

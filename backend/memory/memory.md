@@ -34,3 +34,9 @@
 * 2026-04-27 15:44:26 : Dataset uploaded: compas-scores-raw.csv
 * 2026-04-27 15:44:32 : Mitigation applied: oversampling on MaritalStatus
 * 2026-04-27 15:44:44 : Intersectional bias analyzed: LastName, MiddleName, MaritalStatus
+* 2026-04-27 22:15:16 : Dataset uploaded: compas-scores-raw.csv
+* 2026-04-27 22:15:30 : Intersectional bias analyzed: Person_ID, FirstName, Language, MaritalStatus
+* 2026-04-27 22:15:46 : Model trained: logistic_regression, Accuracy: 0.9046
+* 2026-04-27 22:15:57 : Mitigation applied: oversampling on MaritalStatus
+* 2026-04-28 11:52:07 : Dataset uploaded: compas-scores-raw.csv
+* 2026-04-28 11:52:17 : Intersectional bias analyzed: Ethnic_Code_Text, DateOfBirth, ScaleSet_ID, ScaleSet
